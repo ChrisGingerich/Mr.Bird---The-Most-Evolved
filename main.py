@@ -1,0 +1,402 @@
+""" Flappy Bird Clone by Chris Gingerich """
+# Import standard modules.
+import sys
+import random
+import time
+
+# Import non-standard modules.
+import pygame as pg
+from pygame.locals import *
+
+# Import local modules
+import NeuralNetworkLib as NN
+from settings import *
+from sprites import Bird, TopPipe, BottomPipe
+
+class App():
+    # initialize app window, etc
+    def __init__(self):
+        # Initialise PyGame.
+        pg.init()
+
+        # Initalize some font action
+        pg.font.init()
+        self.font_name = pg.font.match_font(FONT)
+
+        # Set up the clock. This will tick every frame and thus maintain a relatively constant framerate. Hopefully.
+        self.fps = FPS
+        self.fpsClock = pg.time.Clock()
+
+        # Set up the window.
+        self.width, self.height = WIDTH, HEIGHT
+        self.screen = pg.display.set_mode((self.width, self.height))
+        pg.display.set_caption(TITLE)
+
+        # screen is the surface representing the window.
+        # PyGame surfaces can be thought of as screen sections that you can draw onto.
+        # You can also draw surfaces onto other surfaces, rotate surfaces, and transform surfaces.
+
+        # Game type 0 is singleplayer
+        self.gametype = 0
+        self.running = True
+
+    def show_start_screen(self):
+        running = True
+        while running:
+
+            # Event handling for intro screen
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    quit()
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_SPACE:
+                        self.gametype = 0
+                        running = False
+                if event.type == pg.MOUSEBUTTONDOWN:
+                    self.gametype = 1
+                    running = False
+
+            # Displaying text on the intro screen
+            largeText = pg.font.Font(pg.font.match_font("arial"), 50)
+            text_surf, text_rect = self.text_objects(TITLE, largeText)
+            text_rect.center = ((WIDTH / 2),(HEIGHT / 4))
+            self.screen.blit(text_surf, text_rect)
+
+            smaller_text = pg.font.Font(pg.font.match_font("arial"), 20)
+            text_surf_2, text_rect_2 = self.text_objects("Press Space to start single player!", smaller_text)
+            text_rect_2.center = ((WIDTH / 2),(3 * HEIGHT / 4))
+            self.screen.blit(text_surf_2, text_rect_2)
+
+            smaller_text = pg.font.Font(pg.font.match_font("arial"), 20)
+            text_surf_2, text_rect_2 = self.text_objects("Click the screen to train!", smaller_text)
+            text_rect_2.center = ((WIDTH / 2),(3.5 * HEIGHT / 4))
+            self.screen.blit(text_surf_2, text_rect_2)
+
+            pg.display.update()
+
+            self.screen.fill(WHITE)
+
+    # Creates a text object
+    def text_objects(self, text, font):
+        textSurface = font.render(text, True, BLACK)
+        return textSurface, textSurface.get_rect()
+    
+    def setup_solo(self):
+        self.playing = True
+        self.dt = 1 / self.fps
+        self.frame_count = 0
+
+        self.player = Bird()
+        self.player_group = pg.sprite.Group()
+        self.player_group.add(self.player)
+
+        # Set up pipe sprite group
+        self.pipes_group = pg.sprite.Group()
+        # Create 2 lists of pipes currently in action for future reference
+        self.top_pipe_list = list()
+        self.bottom_pipe_list = list()
+        self.first_pipe_spawned = False
+
+        self.speed_increase = 0
+        #For first pipe timer
+        self.start_ticks = pg.time.get_ticks()
+        #pg.event.post(pg.event.Event(USEREVENT+4))
+        pg.time.set_timer(USEREVENT+4, 1500)
+        
+    def run_solo(self):
+        self.setup_solo()
+        while self.playing:
+            self.events()
+            self.update(self.dt)
+            self.draw()
+            self.dt = self.fpsClock.tick(self.fps)
+            self.frame_count += 1
+
+    def events(self):
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                if self.playing:
+                    self.playing = False
+                self.running = False
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_SPACE:
+                    self.player.flap()
+            if event.type == USEREVENT+4:
+                self.generate_pipe_pair()
+            
+            # USEREVENT+2 is a scored point event
+            if event.type == USEREVENT+2:
+                self.player.single_score += 1
+
+            # USEREVENT+3 is a call to remove the first element of both pipe lists
+            if event.type == USEREVENT+3:
+                del self.bottom_pipe_list[0]
+                del self.top_pipe_list[0]
+                #self.generate_pipe_pair(self.speed_increase)
+                #self.speed_increase += SPEED_INCREASE_RATE
+
+        # Test for collision between player and pipes or player and the ground
+        if self.player.collide(self.pipes_group) or self.player.rect.bottom == HEIGHT:
+            self.playing = False
+
+    def update(self, dt):
+        self.pipes_group.update(dt)
+        self.player.update(dt)
+        # Show which pipe is focused on
+
+        self.seconds = (pg.time.get_ticks()-self.start_ticks)/1000 #calculate how many seconds
+
+        for sprite in self.bottom_pipe_list:
+            if sprite.focus:
+                sprite.image.fill(RED)
+            else:
+                sprite.image.fill(GREEN)
+        for sprite in self.top_pipe_list:
+            if sprite.focus:
+                sprite.image.fill(RED)
+            else:
+                sprite.image.fill(GREEN)
+
+    def draw(self):
+        self.screen.fill(WHITE)  # Fill the screen with a color
+
+        ##### Redraw screen here. #####
+        # Draw ground first
+        pg.draw.rect(self.screen, BLACK, (0, HEIGHT - BOTTOM_KILL_THRESHOLD - 20, WIDTH, BOTTOM_KILL_THRESHOLD + 20))
+
+        # Then the pipes
+        self.pipes_group.draw(self.screen)
+
+        # Then the player groups
+        self.player_group.draw(self.screen)
+
+        # Then finally the score
+        self.draw_score(self.screen, ("Score: " + str(self.player.single_score)), 30, 0, 0)
+
+        # Flip the display so that the things we drew actually show up.
+        pg.display.flip()
+
+    def setup_training(self, Num_birds):
+        self.training = True
+        self.playing = True
+        self.dt = 1 / self.fps
+        self.frame_count = 0
+
+        self.players = [Bird() for i in range(Num_birds)]
+        self.saved_players = []
+        self.players_group = pg.sprite.Group()
+        self.players_group.add(self.players)
+
+        self.generation = 0
+
+        # Set up pipe sprite group
+        self.pipes_group = pg.sprite.Group()
+        # Create 2 lists of pipes currently in action for future reference
+        self.top_pipe_list = list()
+        self.bottom_pipe_list = list()
+        self.first_pipe_spawned = False
+
+        self.speed_increase = 0
+        #For first pipe timer
+        self.start_ticks = pg.time.get_ticks()
+        #pg.event.post(pg.event.Event(USEREVENT+4))
+        pg.time.set_timer(USEREVENT+4, PIPE_TIMER)
+
+    def reset_training(self):
+        self.playing = True
+        self.dt = 1 / self.fps
+        self.frame_count = 0
+
+        # Set up pipe sprite group
+        self.pipes_group.empty()
+        # Create 2 lists of pipes currently in action for future reference
+        self.top_pipe_list = list()
+        self.bottom_pipe_list = list()
+        self.first_pipe_spawned = False
+
+        self.speed_increase = 0
+        #For first pipe timer
+        self.start_ticks = pg.time.get_ticks()
+        pg.time.set_timer(USEREVENT+4, 1500)
+      
+    def run_training(self):
+        self.training = True
+        while self.training:
+            for player in self.players:
+                player.think(self.top_pipe_list, self.bottom_pipe_list)
+            self.t_events()
+            self.t_update(self.dt)
+            self.t_draw()
+            self.dt = self.fpsClock.tick(self.fps)
+            self.frame_count += 1
+
+    # A function used to draw the score
+    def draw_score(self, surf, text, size, x, y):
+        font = pg.font.Font(self.font_name, size)
+        text_surface = font.render(text, True, BLACK)
+        text_rect = text_surface.get_rect()
+        text_rect.x, text_rect.y = (x, y)
+        surf.blit(text_surface, text_rect)
+
+    def generate_pipe_pair(self, speed_increase = 0):
+        top_pipe_y = random.randrange(50, HEIGHT - BOTTOM_KILL_THRESHOLD - PIPE_GAP_SIZE - 50)
+        #top_pipe_y = 200
+        bottom_pipe_y = top_pipe_y + PIPE_GAP_SIZE
+
+        top_pipe = TopPipe(top_pipe_y)
+        top_pipe.x_velcoity += speed_increase
+        self.top_pipe_list.append(top_pipe)
+        self.pipes_group.add(top_pipe)
+
+        bottom_pipe = BottomPipe(bottom_pipe_y)
+        bottom_pipe.x_velcoity += speed_increase
+        self.bottom_pipe_list.append(bottom_pipe)
+        self.pipes_group.add(bottom_pipe)
+
+    def show_game_over_screen(self):
+        running = True
+
+        while running:
+            
+            # Event handling for intro screen
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    quit()
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_SPACE:
+                        self.player.y_velocity = 0
+                        self.player.rect.center = (WIDTH / 2, HEIGHT / 2)
+                        running = False
+                        
+            largeText = pg.font.Font(pg.font.match_font("arial"), 40)
+            text_surf, text_rect = self.text_objects("Press Space to try again", largeText)
+            text_rect.center = ((WIDTH / 2),(3 * HEIGHT / 4))
+            self.screen.blit(text_surf, text_rect)
+
+            pg.display.update()
+
+    def t_events(self):
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                if self.playing:
+                    self.playing = False
+                    self.training = False
+                self.running = False
+                break
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_SPACE:
+                    self.player.flap()
+            if event.type == USEREVENT+4:
+                self.generate_pipe_pair()
+            
+            # USEREVENT+2 is a scored point event
+            if event.type == USEREVENT+2:
+                for player in self.players_group:
+                    player.score += 1
+
+            # USEREVENT+3 is a call to remove the first element of both pipe lists
+            if event.type == USEREVENT+3:
+                del self.bottom_pipe_list[0]
+                del self.top_pipe_list[0]
+                #self.generate_pipe_pair(self.speed_increase)
+                #self.speed_increase += SPEED_INCREASE_RATE
+
+        # Test for collision between player and pipes or player and the ground/roof
+        for player in self.players_group:
+            if player.collide(self.pipes_group) or player.rect.bottom == HEIGHT or player.rect.bottom < -100:
+                player.alive = False
+    
+    def t_update(self, dt):
+        self.pipes_group.update(dt)
+
+        if self.players.__len__() == 0:
+            self.next_generation()
+            self.training = False
+
+        for player in self.players_group:
+            player.update(dt)
+            if not player.alive:
+                self.saved_players.append(player)
+                self.players.remove(player)
+                player.kill()
+        # Show which pipe is focused on
+        self.seconds = (pg.time.get_ticks()-self.start_ticks)/1000 #calculate how many seconds
+
+        for sprite in self.bottom_pipe_list:
+            if sprite.focus:
+                sprite.image.fill(RED)
+            else:
+                sprite.image.fill(GREEN)
+        for sprite in self.top_pipe_list:
+            if sprite.focus:
+                sprite.image.fill(RED)
+            else:
+                sprite.image.fill(GREEN)
+            
+    def t_draw(self):
+        self.screen.fill(WHITE)  # Fill the screen with a color
+
+        ##### Redraw screen here. #####
+        # Draw ground first
+        pg.draw.rect(self.screen, BLACK, (0, HEIGHT - BOTTOM_KILL_THRESHOLD - 20, WIDTH, BOTTOM_KILL_THRESHOLD + 20))
+
+        # Then the pipes
+        self.pipes_group.draw(self.screen)
+
+        # Then the player groups
+        self.players_group.draw(self.screen)
+
+        # Then finally the generation number
+        self.draw_score(self.screen, ("Generation: " + str(self.generation)), 30, 0, 0)
+
+        # Flip the display so that the things we drew actually show up.
+        pg.display.flip()
+
+    def next_generation(self):
+        self.generation += 1
+        self.calculate_fitness()
+        for i in range(NUM_OF_BIRDS):
+            new_bird = self.pick_one_bird()
+            self.players.append(new_bird)
+            self.players_group.add(new_bird)
+        
+        self.saved_players = []
+
+
+    def pick_one_bird(self):
+        index = 0
+        r = random.random()
+        while (r > 0):
+            r = r - self.saved_players[index].fitness
+            index += 1
+        index -= 1
+
+        bird = self.saved_players[index]
+        child = Bird(bird.brain)
+        child.brain.mutate(MUTATION_RATE)
+        return child
+
+
+    def calculate_fitness(self):
+        total = 0
+        for player in self.saved_players:
+            total += player.score
+        for player in self.saved_players:
+            player.fitness = player.score / total
+
+if __name__ == "__main__":
+    a = App()
+    while a.running: 
+        a.show_start_screen()
+        if a.gametype == 0:
+            a.run_solo()
+            a.show_game_over_screen()
+        elif a.gametype == 1:
+            a.setup_training(NUM_OF_BIRDS)
+            while a.running:
+                a.run_training()
+                a.reset_training()
+    
+    pg.quit()
