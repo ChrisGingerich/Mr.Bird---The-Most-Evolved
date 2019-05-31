@@ -285,9 +285,6 @@ class App():
                     self.training = False
                 self.running = False
                 break
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_SPACE:
-                    self.player.flap()
             if event.type == USEREVENT+4:
                 self.generate_pipe_pair()
             
