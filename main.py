@@ -295,8 +295,10 @@ class App():
 
             # USEREVENT+3 is a call to remove the first element of both pipe lists
             if event.type == USEREVENT+3:
-                del self.bottom_pipe_list[0]
-                del self.top_pipe_list[0]
+                if self.bottom_pipe_list.__len__() != 0:
+                    del self.bottom_pipe_list[0]
+                if self.top_pipe_list.__len__() != 0:
+                    del self.top_pipe_list[0]
                 #self.generate_pipe_pair(self.speed_increase)
                 #self.speed_increase += SPEED_INCREASE_RATE
 
