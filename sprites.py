@@ -15,7 +15,7 @@ class Bird(pg.sprite.Sprite):
         self.image.set_colorkey(WHITE) 
         #self.image.fill(BLUE)
         self.rect = self.image.get_rect()
-        self.rect.inflate(-10, -10)
+        self.rect.inflate(-30, -20)
         self.rect.center = (WIDTH / 3, 3 * HEIGHT / 5)
         self.y_velocity = STARTING_Y_VELOCITY
         self.single_score = 0
@@ -49,7 +49,7 @@ class Bird(pg.sprite.Sprite):
     def collide(self, spriteGroup):
         return pg.sprite.spritecollide(self, spriteGroup, False)
 
-### NEAT Inputs ###
+### Genetic Algo Inputs and brain ###
 
     # Returns distance to next pipe pair as a float
     def distance_to_next_pipe(self, pipe_list):
@@ -82,8 +82,7 @@ class Bird(pg.sprite.Sprite):
     def current_y_vel(self):
         return self.y_velocity
 
-### ### ### ### ###
-    
+    # Decides if the bird should flap during a given frame by feeding the inputs through its brain
     def think(self, top, bot):
         in_1 = self.distance_to_next_pipe(top) / 253
         in_2 = self.distance_to_next_top(top) / 480
@@ -126,7 +125,6 @@ class BottomPipe(pg.sprite.Sprite):
         self.x_velcoity = INITIAL_PIPE_SPEED
         self.pipe_score_sent = False
         self.focus = True
-
 
     def update(self, dt):
         self.rect.right += self.x_velcoity * dt

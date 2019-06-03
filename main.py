@@ -43,6 +43,8 @@ class App():
         self.gametype = 0
         self.running = True
 
+    # Contains event loop which waits for a mouse click or space press
+    # changes gametype variable to 1 or 0
     def show_start_screen(self):
         running = True
         while running:
@@ -79,12 +81,8 @@ class App():
             pg.display.update()
 
             self.screen.fill(WHITE)
-
-    # Creates a text object
-    def text_objects(self, text, font):
-        textSurface = font.render(text, True, BLACK)
-        return textSurface, textSurface.get_rect()
     
+    # Preps the App for a solo game
     def setup_solo(self):
         self.playing = True
         self.dt = 1 / self.fps
@@ -105,8 +103,9 @@ class App():
         #For first pipe timer
         self.start_ticks = pg.time.get_ticks()
         #pg.event.post(pg.event.Event(USEREVENT+4))
-        pg.time.set_timer(USEREVENT+4, 1500)
-        
+        pg.time.set_timer(USEREVENT+4, PIPE_TIMER)
+
+    # Contains gameloop (for solo mode)
     def run_solo(self):
         self.setup_solo()
         while self.playing:
@@ -116,6 +115,7 @@ class App():
             self.dt = self.fpsClock.tick(self.fps)
             self.frame_count += 1
 
+    # Pygame events are checked here (for solo mode)
     def events(self):
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -139,38 +139,30 @@ class App():
                 #self.generate_pipe_pair(self.speed_increase)
                 #self.speed_increase += SPEED_INCREASE_RATE
 
+    # Game logic is tested here and all sprites have their own update functions called (for solo mode)
+    def update(self, dt):
         # Test for collision between player and pipes or player and the ground
         if self.player.collide(self.pipes_group) or self.player.rect.bottom == HEIGHT:
             self.playing = False
 
-    def update(self, dt):
         self.pipes_group.update(dt)
         self.player.update(dt)
         # Show which pipe is focused on
 
         self.seconds = (pg.time.get_ticks()-self.start_ticks)/1000 #calculate how many seconds
 
-        for sprite in self.bottom_pipe_list:
-            if sprite.focus:
-                sprite.image.fill(RED)
-            else:
-                sprite.image.fill(GREEN)
-        for sprite in self.top_pipe_list:
-            if sprite.focus:
-                sprite.image.fill(RED)
-            else:
-                sprite.image.fill(GREEN)
-
+    # Draws to the screen (for solo mode)
     def draw(self):
-        self.screen.fill(WHITE)  # Fill the screen with a color
+        self.screen.fill((0,204,255))  # Fill the screen with a color
 
         ##### Redraw screen here. #####
-        # Draw ground first
-        pg.draw.rect(self.screen, BLACK, (0, HEIGHT - BOTTOM_KILL_THRESHOLD - 20, WIDTH, BOTTOM_KILL_THRESHOLD + 20))
-
-        # Then the pipes
+        # The pipes
         self.pipes_group.draw(self.screen)
 
+        # Then draw ground 
+        #pg.draw.rect(self.screen, BLACK, (0, HEIGHT - BOTTOM_KILL_THRESHOLD - 20, WIDTH, BOTTOM_KILL_THRESHOLD + 20))
+        self.screen.blit(self.floor, self.floor_rect)
+        
         # Then the player groups
         self.player_group.draw(self.screen)
 
@@ -180,6 +172,32 @@ class App():
         # Flip the display so that the things we drew actually show up.
         pg.display.flip()
 
+    # Similar to show_start_screen(), waits for spacebar
+    def show_game_over_screen(self):
+        running = True
+
+        while running:
+            
+            # Event handling for intro screen
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    quit()
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_SPACE:
+                        self.player.y_velocity = 0
+                        self.player.rect.center = (WIDTH / 2, HEIGHT / 2)
+                        running = False
+                        
+            largeText = pg.font.Font(pg.font.match_font("arial"), 40)
+            text_surf, text_rect = self.text_objects("Press Space to try again", largeText)
+            text_rect.center = ((WIDTH / 2),(3 * HEIGHT / 4))
+            self.screen.blit(text_surf, text_rect)
+
+            pg.display.update()
+
+    # Preps the App for an AI experience
+    # Generates first generation of birds and preps game stuff
     def setup_training(self, Num_birds):
         self.training = True
         self.playing = True
@@ -208,6 +226,19 @@ class App():
         #pg.event.post(pg.event.Event(USEREVENT+4))
         pg.time.set_timer(USEREVENT+4, PIPE_TIMER)
 
+    # Main training game loop
+    def run_training(self):
+        self.training = True
+        while self.training:
+            for player in self.players:
+                player.think(self.top_pipe_list, self.bottom_pipe_list)
+            self.t_events()
+            self.t_update(self.dt)
+            self.t_draw()
+            self.dt = self.fpsClock.tick(self.fps)
+            self.frame_count += 1
+
+    # Called once all the birds are dead, resets the game stuff
     def reset_training(self):
         self.playing = True
         self.dt = 1 / self.fps
@@ -225,64 +256,8 @@ class App():
         self.start_ticks = pg.time.get_ticks()
         #pg.time.set_timer(USEREVENT+4, 0)
         pg.time.set_timer(USEREVENT+4, PIPE_TIMER)
-      
-    def run_training(self):
-        self.training = True
-        while self.training:
-            for player in self.players:
-                player.think(self.top_pipe_list, self.bottom_pipe_list)
-            self.t_events()
-            self.t_update(self.dt)
-            self.t_draw()
-            self.dt = self.fpsClock.tick(self.fps)
-            self.frame_count += 1
 
-    # A function used to draw the score
-    def draw_text(self, surf, text, size, x, y):
-        font = pg.font.Font(self.font_name, size)
-        text_surface = font.render(text, True, BLACK)
-        text_rect = text_surface.get_rect()
-        text_rect.x, text_rect.y = (x, y)
-        surf.blit(text_surface, text_rect)
-
-    def generate_pipe_pair(self, speed_increase = 0):
-        top_pipe_y = random.randrange(50, HEIGHT - BOTTOM_KILL_THRESHOLD - PIPE_GAP_SIZE - 50)
-        #top_pipe_y = 200
-        bottom_pipe_y = top_pipe_y + PIPE_GAP_SIZE
-
-        top_pipe = TopPipe(top_pipe_y)
-        top_pipe.x_velcoity += speed_increase
-        self.top_pipe_list.append(top_pipe)
-        self.pipes_group.add(top_pipe)
-
-        bottom_pipe = BottomPipe(bottom_pipe_y)
-        bottom_pipe.x_velcoity += speed_increase
-        self.bottom_pipe_list.append(bottom_pipe)
-        self.pipes_group.add(bottom_pipe)
-
-    def show_game_over_screen(self):
-        running = True
-
-        while running:
-            
-            # Event handling for intro screen
-            for event in pg.event.get():
-                if event.type == pg.QUIT:
-                    pg.quit()
-                    quit()
-                if event.type == pg.KEYDOWN:
-                    if event.key == pg.K_SPACE:
-                        self.player.y_velocity = 0
-                        self.player.rect.center = (WIDTH / 2, HEIGHT / 2)
-                        running = False
-                        
-            largeText = pg.font.Font(pg.font.match_font("arial"), 40)
-            text_surf, text_rect = self.text_objects("Press Space to try again", largeText)
-            text_rect.center = ((WIDTH / 2),(3 * HEIGHT / 4))
-            self.screen.blit(text_surf, text_rect)
-
-            pg.display.update()
-
+    # Pygame events for training
     def t_events(self):
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -309,6 +284,8 @@ class App():
                 #self.generate_pipe_pair(self.speed_increase)
                 #self.speed_increase += SPEED_INCREASE_RATE
 
+    # Everyones update functions get called, game logic occurs
+    # Calls next_generation() if all the birds die
     def t_update(self, dt):
         # Test for collision between player and pipes or player and the ground/roof
         for player in self.players_group:
@@ -317,6 +294,7 @@ class App():
 
         self.pipes_group.update(dt)
 
+        # Important
         if self.players.__len__() == 0:
             self.next_generation()
             self.training = False
@@ -332,14 +310,12 @@ class App():
                 player.kill()
         # Show which pipe is focused on
         self.seconds = (pg.time.get_ticks()-self.start_ticks)/1000 #calculate how many seconds
-            
+
+    # Draw the training mode to the screen
     def t_draw(self):
         self.screen.fill((0,204,255))  # Fill the screen with a color
 
         ##### Redraw screen here. #####
-        # Draw ground first
-        self.screen.blit(self.floor, self.floor_rect)
-
         # Then the pipes
         self.pipes_group.draw(self.screen)
 
@@ -358,6 +334,7 @@ class App():
         # Flip the display so that the things we drew actually show up.
         pg.display.flip()
 
+    # Calculates the fitness of the birds, then calls pick_one_bird() n times until a new popluation has been created
     def next_generation(self):
         self.generation += 1
         self.game_score = 0
@@ -369,7 +346,18 @@ class App():
         
         self.saved_players = []
 
+    # Assigns each player a fitness score based on how well each proformed relative to eachother
+    def calculate_fitness(self):
+        total = 0
+        for player in self.saved_players:
+            total += player.score
+        for player in self.saved_players:
+            player.fitness = player.score / total
 
+    # Algorithm to pick one bird out of a pool of birds with un equal probabilities of being picked
+    # The higher the birds fitness score, the more likely this function will create a mutated copy
+    # oh yeah, after it selects the bird, it mutates that bird before returing it alowing us to explore the landscape of posibilities
+    # :')
     def pick_one_bird(self):
         index = 0
         r = random.random()
@@ -383,14 +371,37 @@ class App():
         child.brain.mutate(MUTATION_RATE)
         return child
 
+    # Creates a text object
+    def text_objects(self, text, font):
+        textSurface = font.render(text, True, BLACK)
+        return textSurface, textSurface.get_rect()
 
-    def calculate_fitness(self):
-        total = 0
-        for player in self.saved_players:
-            total += player.score
-        for player in self.saved_players:
-            player.fitness = player.score / total
+    # A function used to draw text on the screen
+    def draw_text(self, surf, text, size, x, y):
+        font = pg.font.Font(self.font_name, size)
+        text_surface = font.render(text, True, BLACK)
+        text_rect = text_surface.get_rect()
+        text_rect.x, text_rect.y = (x, y)
+        surf.blit(text_surface, text_rect)
 
+    # Creates 2 pipes that move to the left
+    def generate_pipe_pair(self, speed_increase = 0):
+        top_pipe_y = random.randrange(50, HEIGHT - BOTTOM_KILL_THRESHOLD - PIPE_GAP_SIZE - 50)
+        #top_pipe_y = 200
+        bottom_pipe_y = top_pipe_y + PIPE_GAP_SIZE
+
+        top_pipe = TopPipe(top_pipe_y)
+        top_pipe.x_velcoity += speed_increase
+        self.top_pipe_list.append(top_pipe)
+        self.pipes_group.add(top_pipe)
+
+        bottom_pipe = BottomPipe(bottom_pipe_y)
+        bottom_pipe.x_velcoity += speed_increase
+        self.bottom_pipe_list.append(bottom_pipe)
+        self.pipes_group.add(bottom_pipe)
+
+
+# Program starts here
 if __name__ == "__main__":
     a = App()
     while a.running: 

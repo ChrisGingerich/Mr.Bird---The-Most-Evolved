@@ -18,7 +18,9 @@ def mutate_one(value, rate):
         return value
 
 class NeuralNetwork():
+    # This is sloppy and it's only here to allow me to make a copy of a nn for the genetic algo
     def __init__(self, a, b=None, c=None):
+        # basically, if one thing is passed to the function it will treat it like another nn and copy its parameters
         if (b == None):
             self.input_nodes = a.input_nodes
             self.hidden_nodes = a.hidden_nodes
@@ -30,6 +32,7 @@ class NeuralNetwork():
             self.bias_h = a.bias_h
             self.bias_o = a.bias_o
 
+        # Otherwise it will create a new one with a, b, and c being the number of input, hidden, and output nodes respectively
         else:
             self.input_nodes = a
             self.hidden_nodes = b
@@ -63,6 +66,7 @@ class NeuralNetwork():
 
         return output
 
+    # BackProp using a np array as input and a np array as target
     def train(self, inputs, targets):
         # Generate hidden 1d matrix
         hiddens = self.weights_ih.dot(inputs)
@@ -99,6 +103,7 @@ class NeuralNetwork():
     def copy(self):
         return NeuralNetwork(self)
 
+    # When called, call the mutate_one function on every value in the weights and bias' matrices
     def mutate(self, mut_rate):
         mutate_all = np.vectorize(mutate_one)
         self.weights_ih = mutate_all(self.weights_ih, mut_rate)
