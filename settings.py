@@ -22,8 +22,7 @@ SPEED_INCREASE_RATE = 0
 
 # Neat
 NUM_OF_BIRDS = 300
-INPUT_NO_VALUE_SIGNAL = HEIGHT / 2
-MUTATION_RATE = .02
+MUTATION_RATE = .02 # I like it between .1 and .4 personally
 
 
 # Define Colors
