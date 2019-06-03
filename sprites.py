@@ -56,16 +56,16 @@ class Bird(pg.sprite.Sprite):
         if len(pipe_list) == 0:
             return WIDTH/3 - PLAYER_WIDTH/2
         for pipe in pipe_list:
-            if pipe.focus:
-                return (pipe.rect.right - PIPE_WIDTH / 2) - self.rect.left
+            if pipe.focus and pipe.rect.right < self.rect.left:
+                return (pipe.rect.right - self.rect.left)
         return 253
         
     # Returns verticle distance from bird to the bottom of the top pipe
     def distance_to_next_top(self, pipe_list):
         if len(pipe_list) == 0:
-            return 0
+            return 1
         for pipe in pipe_list:
-            if pipe.focus:
+            if pipe.focus and pipe.rect.right < self.rect.left:
                 return pipe.rect.bottom - self.rect.top
         return 0
 
@@ -74,7 +74,7 @@ class Bird(pg.sprite.Sprite):
         if len(pipe_list) == 0:
             return 0
         for pipe in pipe_list:
-            if pipe.focus:
+            if pipe.focus and pipe.rect.right > self.rect.left:
                 return pipe.rect.top - self.rect.bottom
         return 0
 
@@ -97,8 +97,8 @@ class Bird(pg.sprite.Sprite):
 class TopPipe(pg.sprite.Sprite):
     def __init__(self, bottom_height):
         pg.sprite.Sprite.__init__(self)
-        self.image = pg.Surface((PIPE_WIDTH, 6000))
-        self.image.fill(GREEN)
+        self.image = pg.image.load("top_pipe.png") 
+        self.image.set_colorkey(WHITE) 
         self.rect = self.image.get_rect()
         self.rect.bottom = bottom_height
         self.rect.left = WIDTH
@@ -111,15 +111,15 @@ class TopPipe(pg.sprite.Sprite):
 
         if self.rect.right < 0:
             self.kill()
-        if self.rect.right < WIDTH / 3 and self.pipe_score_sent == False:
+        if self.rect.right < ((WIDTH / 3) - 20) and self.pipe_score_sent == False:
             self.focus = False
             self.pipe_score_sent = True
 
 class BottomPipe(pg.sprite.Sprite):
     def __init__(self, top_height):
         pg.sprite.Sprite.__init__(self)
-        self.image = pg.Surface((PIPE_WIDTH, 2000))
-        self.image.fill(GREEN)
+        self.image = pg.image.load("bot_pipe.png")
+        self.image.set_colorkey(WHITE) 
         self.rect = self.image.get_rect()
         self.rect.top = top_height
         self.rect.left = WIDTH
@@ -137,7 +137,7 @@ class BottomPipe(pg.sprite.Sprite):
             ee = pg.event.Event(USEREVENT+3)
             pg.event.post(ee)
         
-        if self.rect.right < WIDTH / 3 and self.pipe_score_sent == False:
+        if self.rect.right < ((WIDTH / 3) - 20) and self.pipe_score_sent == False:
             # Add 1 to score event
             ee = pg.event.Event(USEREVENT+2)
             pg.event.post(ee)

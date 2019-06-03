@@ -31,6 +31,9 @@ class App():
         self.width, self.height = WIDTH, HEIGHT
         self.screen = pg.display.set_mode((self.width, self.height))
         pg.display.set_caption(TITLE)
+        self.floor = pg.image.load("floor.png")
+        self.floor_rect = self.floor.get_rect()
+        self.floor_rect.bottom = HEIGHT + 60
 
         # screen is the surface representing the window.
         # PyGame surfaces can be thought of as screen sections that you can draw onto.
@@ -189,6 +192,7 @@ class App():
         self.players_group.add(self.players)
 
         self.generation = 0
+        self.record = 0
 
         # Set up pipe sprite group
         self.pipes_group = pg.sprite.Group()
@@ -219,7 +223,7 @@ class App():
         self.speed_increase = 0
         #For first pipe timer
         self.start_ticks = pg.time.get_ticks()
-        pg.time.set_timer(USEREVENT+4, 0)
+        #pg.time.set_timer(USEREVENT+4, 0)
         pg.time.set_timer(USEREVENT+4, PIPE_TIMER)
       
     def run_training(self):
@@ -305,17 +309,20 @@ class App():
                 #self.generate_pipe_pair(self.speed_increase)
                 #self.speed_increase += SPEED_INCREASE_RATE
 
+    def t_update(self, dt):
         # Test for collision between player and pipes or player and the ground/roof
         for player in self.players_group:
-            if player.collide(self.pipes_group) or player.rect.bottom == HEIGHT or player.rect.bottom < -100:
+            if player.collide(self.pipes_group) or player.rect.bottom == HEIGHT or player.rect.bottom < -40:
                 player.alive = False
-    
-    def t_update(self, dt):
+
         self.pipes_group.update(dt)
 
         if self.players.__len__() == 0:
             self.next_generation()
             self.training = False
+
+        if self.record < self.game_score:
+            self.record = self.game_score
 
         for player in self.players_group:
             player.update(dt)
@@ -325,37 +332,28 @@ class App():
                 player.kill()
         # Show which pipe is focused on
         self.seconds = (pg.time.get_ticks()-self.start_ticks)/1000 #calculate how many seconds
-
-        for sprite in self.bottom_pipe_list:
-            if sprite.focus:
-                sprite.image.fill(RED)
-            else:
-                sprite.image.fill(GREEN)
-        for sprite in self.top_pipe_list:
-            if sprite.focus:
-                sprite.image.fill(RED)
-            else:
-                sprite.image.fill(GREEN)
             
     def t_draw(self):
-        self.screen.fill(WHITE)  # Fill the screen with a color
+        self.screen.fill((0,204,255))  # Fill the screen with a color
 
         ##### Redraw screen here. #####
         # Draw ground first
-        pg.draw.rect(self.screen, BLACK, (0, HEIGHT - BOTTOM_KILL_THRESHOLD - 20, WIDTH, BOTTOM_KILL_THRESHOLD + 20))
-
-
-        # Then the player groups
-        self.players_group.draw(self.screen)
+        self.screen.blit(self.floor, self.floor_rect)
 
         # Then the pipes
         self.pipes_group.draw(self.screen)
 
+        # Draw ground first
+        self.screen.blit(self.floor, self.floor_rect)
+
+        # Then the player groups
+        self.players_group.draw(self.screen)
 
         # Then finally the generation number
         self.draw_text(self.screen, ("Generation: " + str(self.generation)), 30, 0, 0)
         self.draw_text(self.screen, ("Current # Pipes Cleared: " + str(self.game_score)), 30, 0, 35)
-        self.draw_text(self.screen, ("Current # Birds Alive: " + str(self.players.__len__())), 30, 0, 70)
+        self.draw_text(self.screen, ("Current Record: " + str(self.record)), 30, 0, 70)
+        self.draw_text(self.screen, ("Current # Birds Alive: " + str(self.players.__len__())), 30, 0, 105)
 
         # Flip the display so that the things we drew actually show up.
         pg.display.flip()
