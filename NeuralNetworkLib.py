@@ -141,11 +141,3 @@ if __name__ == "__main__":
     print(nn.feedforward([1,0]))
     print(nn.feedforward([0,1]))
     print(nn.feedforward([1,1]))
-
-
-        
-    
-
-
-
-

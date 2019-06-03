@@ -24,7 +24,6 @@ SPEED_INCREASE_RATE = 0
 NUM_OF_BIRDS = 300
 MUTATION_RATE = .02 # I like it between .1 and .4 personally
 
-
 # Define Colors
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)

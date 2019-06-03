@@ -6,7 +6,6 @@ from pygame.locals import *
 from settings import *
 from NeuralNetworkLib import NeuralNetwork
 
-# This class represents the sprite for player (bird)
 class Bird(pg.sprite.Sprite):
     def __init__(self, brain = None):
         pg.sprite.Sprite.__init__(self)
@@ -48,8 +47,8 @@ class Bird(pg.sprite.Sprite):
 
     def collide(self, spriteGroup):
         return pg.sprite.spritecollide(self, spriteGroup, False)
-
-### Genetic Algo Inputs and brain ###
+    
+    # Genetic Algo Inputs and brain #
 
     # Returns distance to next pipe pair as a float
     def distance_to_next_pipe(self, pipe_list):
@@ -92,7 +91,6 @@ class Bird(pg.sprite.Sprite):
         if output[0] > .5:
             self.flap()
    
-
 class TopPipe(pg.sprite.Sprite):
     def __init__(self, bottom_height):
         pg.sprite.Sprite.__init__(self)

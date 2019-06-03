@@ -400,15 +400,17 @@ class App():
         self.bottom_pipe_list.append(bottom_pipe)
         self.pipes_group.add(bottom_pipe)
 
-
 # Program starts here
 if __name__ == "__main__":
     a = App()
     while a.running: 
+
         a.show_start_screen()
+
         if a.gametype == 0:
             a.run_solo()
             a.show_game_over_screen()
+
         elif a.gametype == 1:
             a.setup_training(NUM_OF_BIRDS)
             while a.running:
