@@ -28,7 +28,7 @@ class Bird(pg.sprite.Sprite):
         if brain:
             self.brain = brain.copy();
         else:
-            self.brain = NeuralNetwork(4,4,1)
+            self.brain = NeuralNetwork(4,HIDDEN_NODES,1)
     
     def update(self, dt):
         self.score += 1

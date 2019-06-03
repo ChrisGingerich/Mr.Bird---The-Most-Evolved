@@ -20,9 +20,10 @@ PIPE_TIMER = 2000 # How many miliseconds between each pipe
 BOTTOM_KILL_THRESHOLD = 50
 SPEED_INCREASE_RATE = 0
 
-# Neat
+# Genetic Algo
 NUM_OF_BIRDS = 300
 MUTATION_RATE = .02 # I like it between .1 and .4 personally
+HIDDEN_NODES = 8
 
 # Define Colors
 WHITE = (255, 255, 255)

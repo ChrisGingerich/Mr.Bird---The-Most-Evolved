@@ -209,7 +209,7 @@ class App():
         self.players_group = pg.sprite.Group()
         self.players_group.add(self.players)
 
-        self.generation = 0
+        self.generation = 1
         self.record = 0
 
         # Set up pipe sprite group
