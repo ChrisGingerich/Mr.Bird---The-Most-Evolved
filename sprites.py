@@ -11,9 +11,11 @@ class Bird(pg.sprite.Sprite):
     def __init__(self, brain = None):
         pg.sprite.Sprite.__init__(self)
         # 50px by 50px
-        self.image = pg.Surface((PLAYER_WIDTH, PLAYER_WIDTH))
-        self.image.fill(BLUE)
+        self.image = pg.image.load("bird.png") #pg.Surface((PLAYER_WIDTH, PLAYER_WIDTH))
+        self.image.set_colorkey(WHITE) 
+        #self.image.fill(BLUE)
         self.rect = self.image.get_rect()
+        self.rect.inflate(-10, -10)
         self.rect.center = (WIDTH / 3, 3 * HEIGHT / 5)
         self.y_velocity = STARTING_Y_VELOCITY
         self.single_score = 0
@@ -55,7 +57,7 @@ class Bird(pg.sprite.Sprite):
             return WIDTH/3 - PLAYER_WIDTH/2
         for pipe in pipe_list:
             if pipe.focus:
-                return pipe.rect.right - self.rect.left
+                return (pipe.rect.right - PIPE_WIDTH / 2) - self.rect.left
         return 253
         
     # Returns verticle distance from bird to the bottom of the top pipe

@@ -172,7 +172,7 @@ class App():
         self.player_group.draw(self.screen)
 
         # Then finally the score
-        self.draw_score(self.screen, ("Score: " + str(self.player.single_score)), 30, 0, 0)
+        self.draw_text(self.screen, ("Score: " + str(self.player.single_score)), 30, 0, 0)
 
         # Flip the display so that the things we drew actually show up.
         pg.display.flip()
@@ -198,6 +198,7 @@ class App():
         self.first_pipe_spawned = False
 
         self.speed_increase = 0
+        self.game_score = 0
         #For first pipe timer
         self.start_ticks = pg.time.get_ticks()
         #pg.event.post(pg.event.Event(USEREVENT+4))
@@ -218,7 +219,8 @@ class App():
         self.speed_increase = 0
         #For first pipe timer
         self.start_ticks = pg.time.get_ticks()
-        pg.time.set_timer(USEREVENT+4, 1500)
+        pg.time.set_timer(USEREVENT+4, 0)
+        pg.time.set_timer(USEREVENT+4, PIPE_TIMER)
       
     def run_training(self):
         self.training = True
@@ -232,7 +234,7 @@ class App():
             self.frame_count += 1
 
     # A function used to draw the score
-    def draw_score(self, surf, text, size, x, y):
+    def draw_text(self, surf, text, size, x, y):
         font = pg.font.Font(self.font_name, size)
         text_surface = font.render(text, True, BLACK)
         text_rect = text_surface.get_rect()
@@ -292,6 +294,7 @@ class App():
             if event.type == USEREVENT+2:
                 for player in self.players_group:
                     player.score += 1
+                self.game_score += 1
 
             # USEREVENT+3 is a call to remove the first element of both pipe lists
             if event.type == USEREVENT+3:
@@ -341,20 +344,25 @@ class App():
         # Draw ground first
         pg.draw.rect(self.screen, BLACK, (0, HEIGHT - BOTTOM_KILL_THRESHOLD - 20, WIDTH, BOTTOM_KILL_THRESHOLD + 20))
 
-        # Then the pipes
-        self.pipes_group.draw(self.screen)
 
         # Then the player groups
         self.players_group.draw(self.screen)
 
+        # Then the pipes
+        self.pipes_group.draw(self.screen)
+
+
         # Then finally the generation number
-        self.draw_score(self.screen, ("Generation: " + str(self.generation)), 30, 0, 0)
+        self.draw_text(self.screen, ("Generation: " + str(self.generation)), 30, 0, 0)
+        self.draw_text(self.screen, ("Current # Pipes Cleared: " + str(self.game_score)), 30, 0, 35)
+        self.draw_text(self.screen, ("Current # Birds Alive: " + str(self.players.__len__())), 30, 0, 70)
 
         # Flip the display so that the things we drew actually show up.
         pg.display.flip()
 
     def next_generation(self):
         self.generation += 1
+        self.game_score = 0
         self.calculate_fitness()
         for i in range(NUM_OF_BIRDS):
             new_bird = self.pick_one_bird()
