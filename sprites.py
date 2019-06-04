@@ -62,16 +62,16 @@ class Bird(pg.sprite.Sprite):
     # Returns verticle distance from bird to the bottom of the top pipe
     def distance_to_next_top(self, pipe_list):
         if len(pipe_list) == 0:
-            return 1
+            return HEIGHT / 2
         for pipe in pipe_list:
-            if pipe.focus and pipe.rect.right < self.rect.left:
+            if pipe.focus and pipe.rect.right > self.rect.left:
                 return pipe.rect.bottom - self.rect.top
         return 0
 
     # Returns verticle distance from bird to the top of the bottom pipe
     def distance_to_next_bottom(self, pipe_list):
         if len(pipe_list) == 0:
-            return 0
+            return - HEIGHT / 2
         for pipe in pipe_list:
             if pipe.focus and pipe.rect.right > self.rect.left:
                 return pipe.rect.top - self.rect.bottom

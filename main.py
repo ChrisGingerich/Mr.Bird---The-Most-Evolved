@@ -339,7 +339,17 @@ class App():
         self.generation += 1
         self.game_score = 0
         self.calculate_fitness()
-        for i in range(NUM_OF_BIRDS):
+
+        best_fit = 0
+        best_bird = None
+        for bird in self.saved_players:
+            if bird.fitness > best_fit:
+                best_bird = Bird(bird.brain)
+                best_fit = bird.fitness
+        self.players.append(best_bird)
+        self.players_group.add(best_bird)
+        
+        for i in range(NUM_OF_BIRDS - 1):
             new_bird = self.pick_one_bird()
             self.players.append(new_bird)
             self.players_group.add(new_bird)

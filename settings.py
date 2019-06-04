@@ -13,17 +13,17 @@ GRAVITY = .03
 FLAP_VELOCITY = -0.6
 STARTING_Y_VELOCITY = 0
 TITLE = "Mr. Bird"
-PIPE_GAP_SIZE = 230 
+PIPE_GAP_SIZE = 190    
 PIPE_WIDTH = 80 # Basically constant now
-INITIAL_PIPE_SPEED = -0.15
+INITIAL_PIPE_SPEED = -0.15 # -).15
 PIPE_TIMER = 2000 # How many miliseconds between each pipe
 BOTTOM_KILL_THRESHOLD = 50
 SPEED_INCREASE_RATE = 0
 
 # Genetic Algo
 NUM_OF_BIRDS = 300
-MUTATION_RATE = .02 # I like it between .1 and .4 personally
-HIDDEN_NODES = 8
+MUTATION_RATE = .04 # I like it between .01 and .05 personally
+HIDDEN_NODES = 4
 
 # Define Colors
 WHITE = (255, 255, 255)
