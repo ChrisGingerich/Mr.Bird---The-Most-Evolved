@@ -9,12 +9,12 @@ FPS = 60
 # More constants
 FONT = "arial"
 PLAYER_WIDTH = 50 # Basically constant now
+PIPE_WIDTH = 80 # Basically constant now
 GRAVITY = .03
 FLAP_VELOCITY = -0.6
 STARTING_Y_VELOCITY = 0
 TITLE = "Mr. Bird"
-PIPE_GAP_SIZE = 190    
-PIPE_WIDTH = 80 # Basically constant now
+PIPE_GAP_SIZE = 190
 INITIAL_PIPE_SPEED = -0.15 # -).15
 PIPE_TIMER = 2000 # How many miliseconds between each pipe
 BOTTOM_KILL_THRESHOLD = 50

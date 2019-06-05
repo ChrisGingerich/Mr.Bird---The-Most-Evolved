@@ -33,7 +33,7 @@ class App():
         pg.display.set_caption(TITLE)
         self.floor = pg.image.load("floor.png")
         self.floor_rect = self.floor.get_rect()
-        self.floor_rect.bottom = HEIGHT + 60
+        self.floor_rect.bottom = HEIGHT + 20
 
         # screen is the surface representing the window.
         # PyGame surfaces can be thought of as screen sections that you can draw onto.
@@ -42,6 +42,10 @@ class App():
         # Game type 0 is singleplayer
         self.gametype = 0
         self.running = True
+
+        #self.best_fit = 0
+        #self.best_bird = None
+
 
     # Contains event loop which waits for a mouse click or space press
     # changes gametype variable to 1 or 0
@@ -338,18 +342,17 @@ class App():
     def next_generation(self):
         self.generation += 1
         self.game_score = 0
+
         self.calculate_fitness()
 
-        best_fit = 0
-        best_bird = None
-        for bird in self.saved_players:
-            if bird.fitness > best_fit:
-                best_bird = Bird(bird.brain)
-                best_fit = bird.fitness
-        self.players.append(best_bird)
-        self.players_group.add(best_bird)
+        # for bird in self.saved_players:
+        #     if bird.fitness > self.best_fit:
+        #         self.best_bird = Bird(bird.brain)
+        #         self.best_fit = bird.fitness
+        # self.players.append(self.best_bird)
+        # self.players_group.add(self.best_bird)
         
-        for i in range(NUM_OF_BIRDS - 1):
+        for i in range(NUM_OF_BIRDS):
             new_bird = self.pick_one_bird()
             self.players.append(new_bird)
             self.players_group.add(new_bird)

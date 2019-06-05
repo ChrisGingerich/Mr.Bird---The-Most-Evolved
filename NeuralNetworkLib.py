@@ -12,7 +12,7 @@ def dsigmoid(y):
 def mutate_one(value, rate):
     r = random.random()
     if (r < rate):
-        new_value = np.random.normal(0, 0.15)
+        new_value = np.random.normal(0, 0.20)
         return new_value
     else:
         return value
