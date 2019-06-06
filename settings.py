@@ -22,7 +22,7 @@ SPEED_INCREASE_RATE = 0
 
 # Genetic Algo
 NUM_OF_BIRDS = 300
-MUTATION_RATE = .04 # I like it between .01 and .05 personally
+MUTATION_RATE = .02 # I like it between .01 and .05 personally
 HIDDEN_NODES = 4
 
 # Define Colors
